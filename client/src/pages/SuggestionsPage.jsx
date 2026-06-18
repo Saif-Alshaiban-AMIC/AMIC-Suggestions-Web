@@ -376,46 +376,87 @@ export default function SuggestionsPage() {
       </Box>
 
       {/* View Dialog */}
-      <Dialog open={!!viewRow} onClose={() => setViewRow(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 0 } }}>
-        <DialogTitle sx={{ bgcolor: B.blue, color: '#fff', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {t.viewTitle}
-          <IconButton onClick={() => setViewRow(null)} sx={{ color: '#fff' }} size="small"><CloseIcon /></IconButton>
-        </DialogTitle>
+      <Dialog open={!!viewRow} onClose={() => setViewRow(null)} maxWidth="sm" fullWidth
+        PaperProps={{ sx: { borderRadius: 0, overflow: 'hidden' } }}>
         {viewRow && (
-          <DialogContent sx={{ pt: 3 }} dir={dir}>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-              <Chip label={statusLabel(viewRow.status)} size="small"
-                sx={{ fontWeight: 600, borderRadius: 0, bgcolor: STATUS_COLORS[viewRow.status]?.bg, color: STATUS_COLORS[viewRow.status]?.color }} />
-            </Box>
-            <Typography sx={{ fontWeight: 700, fontSize: 18, color: B.blue, mb: 1 }}>{viewRow.title}</Typography>
-            <Typography sx={{ color: '#333', mb: 3, lineHeight: 1.7 }}>{viewRow.description}</Typography>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
-              {[
-                [t.empName, viewRow.employeeName || '—'],
-                [t.empId, viewRow.employeeId || '—'],
-                [t.dept, viewRow.department || '—'],
-                [t.cat, viewRow.category || '—'],
-                [t.date, dayjs(viewRow.submittedAt).format('MMM D, YYYY HH:mm')],
-              ].map(([label, value]) => (
-                <Box key={label}>
-                  <Typography sx={{ fontSize: 11, color: B.brown, textTransform: 'uppercase', fontWeight: 600 }}>{label}</Typography>
-                  <Typography sx={{ fontSize: 14, color: '#333' }}>{value}</Typography>
-                </Box>
-              ))}
-            </Box>
-            {viewRow.adminNote && (
-              <Box sx={{ bgcolor: '#f5f5f5', p: 2, mt: 1 }}>
-                <Typography sx={{ fontSize: 11, color: B.brown, textTransform: 'uppercase', fontWeight: 600, mb: 0.5 }}>{t.adminNote}</Typography>
-                <Typography sx={{ fontSize: 14, color: '#333' }}>{viewRow.adminNote}</Typography>
+          <>
+            {/* Coloured header band */}
+            <Box sx={{ background: `linear-gradient(135deg, ${B.blue} 0%, ${B.lightBlue} 100%)`, px: 3, pt: 3, pb: 2.5 }} dir={dir}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                <Chip
+                  label={statusLabel(viewRow.status)} size="small"
+                  sx={{ fontWeight: 700, borderRadius: '4px', fontSize: 12,
+                    bgcolor: STATUS_COLORS[viewRow.status]?.bg,
+                    color: STATUS_COLORS[viewRow.status]?.color }} />
+                <IconButton onClick={() => setViewRow(null)} size="small" sx={{ color: 'rgba(255,255,255,0.7)', '&:hover': { color: '#fff' }, mt: -0.5 }}>
+                  <CloseIcon fontSize="small" />
+                </IconButton>
               </Box>
-            )}
-          </DialogContent>
+              <Typography sx={{ fontWeight: 700, fontSize: 20, color: '#fff', lineHeight: 1.3, mb: 0.5 }}>
+                {viewRow.title}
+              </Typography>
+              <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
+                {dayjs(viewRow.submittedAt).format('MMM D, YYYY • HH:mm')}
+              </Typography>
+            </Box>
+
+            <DialogContent sx={{ p: 0 }} dir={dir}>
+              {/* Description */}
+              <Box sx={{ px: 3, py: 2.5, borderBottom: `1px solid ${B.grey}` }}>
+                <Typography sx={{ fontSize: 11, fontWeight: 700, color: B.brown, textTransform: 'uppercase', letterSpacing: 1, mb: 1 }}>
+                  Description
+                </Typography>
+                <Typography sx={{ fontSize: 14, color: '#333', lineHeight: 1.8 }}>
+                  {viewRow.description}
+                </Typography>
+              </Box>
+
+              {/* Meta grid */}
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: `1px solid ${B.grey}` }}>
+                {[
+                  [t.empName, viewRow.employeeName || '—'],
+                  [t.empId, viewRow.employeeId || '—'],
+                  [t.dept, viewRow.department || '—'],
+                  [t.cat, viewRow.category || '—'],
+                ].map(([label, value], idx) => (
+                  <Box key={label} sx={{
+                    px: 3, py: 2,
+                    borderRight: idx % 2 === 0 ? `1px solid ${B.grey}` : 'none',
+                    borderBottom: idx < 2 ? `1px solid ${B.grey}` : 'none',
+                  }}>
+                    <Typography sx={{ fontSize: 10, fontWeight: 700, color: B.brown, textTransform: 'uppercase', letterSpacing: 0.8, mb: 0.4 }}>
+                      {label}
+                    </Typography>
+                    <Typography sx={{ fontSize: 14, color: B.blue, fontWeight: 600 }}>{value}</Typography>
+                  </Box>
+                ))}
+              </Box>
+
+              {/* Admin note */}
+              {viewRow.adminNote && (
+                <Box sx={{ px: 3, py: 2, bgcolor: '#fffde7', borderLeft: `4px solid ${B.amber}` }}>
+                  <Typography sx={{ fontSize: 10, fontWeight: 700, color: B.amber, textTransform: 'uppercase', letterSpacing: 0.8, mb: 0.5 }}>
+                    {t.adminNote}
+                  </Typography>
+                  <Typography sx={{ fontSize: 13, color: '#333' }}>{viewRow.adminNote}</Typography>
+                </Box>
+              )}
+            </DialogContent>
+
+            <DialogActions sx={{ px: 3, py: 2, gap: 1, bgcolor: '#fafafa', borderTop: `1px solid ${B.grey}` }}>
+              <Button onClick={() => { setViewRow(null); openEdit(viewRow); }}
+                startIcon={<EditNoteIcon />} variant="outlined"
+                sx={{ borderColor: B.blue, color: B.blue, '&:hover': { bgcolor: B.blue, color: '#fff' } }}>
+                {t.editStatus}
+              </Button>
+              <Box sx={{ flex: 1 }} />
+              <Button variant="contained" onClick={() => setViewRow(null)}
+                sx={{ background: `linear-gradient(135deg, ${B.blue} 0%, ${B.lightBlue} 100%)` }}>
+                {t.close}
+              </Button>
+            </DialogActions>
+          </>
         )}
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => { setViewRow(null); openEdit(viewRow); }} startIcon={<EditNoteIcon />} sx={{ color: B.blue }}>{t.editStatus}</Button>
-          <Button variant="contained" onClick={() => setViewRow(null)}
-            sx={{ background: `linear-gradient(135deg, ${B.blue} 0%, ${B.lightBlue} 100%)` }}>{t.close}</Button>
-        </DialogActions>
       </Dialog>
 
       {/* Edit Dialog */}
