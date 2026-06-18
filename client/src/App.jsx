@@ -22,7 +22,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<AddSuggestionPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/admin" element={<SuggestionsPage />} />
+        <Route path="/admin" element={<AdminRoute><SuggestionsPage /></AdminRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
