@@ -5,15 +5,15 @@ const requireAuth = require('../middleware/requireAuth');
 // Public: submit suggestion
 router.post('/', async (req, res) => {
   try {
-    const { employeeName, department, category, title, description, anonymous } = req.body;
+    const { employeeName, employeeId, department, category, title, description } = req.body;
     if (!title || !description) return res.status(400).json({ error: 'Title and description are required' });
     const suggestion = await Suggestion.create({
-      employeeName: anonymous ? '' : employeeName,
+      employeeName,
+      employeeId,
       department,
       category,
       title,
       description,
-      anonymous: !!anonymous,
     });
     res.status(201).json(suggestion);
   } catch (e) {
