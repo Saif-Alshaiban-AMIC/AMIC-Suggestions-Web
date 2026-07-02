@@ -1,8 +1,6 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const express = require('express');
-const mongoose = require('mongoose');
-const session = require('express-session');
-const { MongoStore } = require('connect-mongo');
+const session = require('cookie-session');
 const cors = require('cors');
 const path = require('path');
 const helmet = require('helmet');
@@ -10,7 +8,6 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT   = process.env.PORT || 5000;
-const MONGO  = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/amic-suggestions';
 const SECRET = process.env.SESSION_SECRET || 'amic-suggestions-secret';
 
 // Security headers
@@ -50,11 +47,12 @@ const submitLimiter = rateLimit({
 app.use(globalLimiter);
 
 app.use(session({
-  secret: SECRET,
-  resave: false,
-  saveUninitialized: false,
-  store: MongoStore.create({ mongoUrl: MONGO }),
-  cookie: { httpOnly: true, secure: false, sameSite: 'strict', maxAge: 1000 * 60 * 60 * 8 },
+  name: 'amic.sid',
+  keys: [SECRET],
+  httpOnly: true,
+  secure: false,
+  sameSite: 'strict',
+  maxAge: 1000 * 60 * 60 * 8,
 }));
 
 app.use('/api/auth/login', loginLimiter);
@@ -75,17 +73,24 @@ app.get('*', (req, res) => {
 
 async function seedAdmin() {
   const User = require('./models/User');
-  const exists = await User.findOne({ username: 'admin' });
+  const exists = await User.findByUsername('admin');
   if (!exists) {
     await User.create({ username: 'admin', password: 'Admin@1234' });
     console.log('Default admin created — username: admin / password: Admin@1234');
   }
 }
 
-mongoose.connect(MONGO)
-  .then(async () => {
-    console.log('MongoDB connected to:', MONGO);
+async function start() {
+  try {
+    // Touch Firestore so a bad credential / connection fails fast at boot.
+    require('./firebase');
     await seedAdmin();
+    console.log('Firebase (Firestore) connected');
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  })
-  .catch(err => console.error('MongoDB error:', err));
+  } catch (err) {
+    console.error('Startup error:', err);
+    process.exit(1);
+  }
+}
+
+start();

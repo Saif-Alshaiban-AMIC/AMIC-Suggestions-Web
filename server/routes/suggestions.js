@@ -24,7 +24,7 @@ router.post('/', async (req, res) => {
 // Admin: get all suggestions
 router.get('/', requireAuth, async (req, res) => {
   try {
-    const suggestions = await Suggestion.find().sort({ submittedAt: -1 }).limit(5000);
+    const suggestions = await Suggestion.findAll(5000);
     res.json(suggestions);
   } catch (e) {
     res.status(500).json({ error: 'Server error' });
@@ -35,11 +35,7 @@ router.get('/', requireAuth, async (req, res) => {
 router.patch('/:id', requireAuth, async (req, res) => {
   try {
     const { status, adminNote } = req.body;
-    const suggestion = await Suggestion.findByIdAndUpdate(
-      req.params.id,
-      { status, adminNote },
-      { new: true }
-    );
+    const suggestion = await Suggestion.updateById(req.params.id, { status, adminNote });
     if (!suggestion) return res.status(404).json({ error: 'Not found' });
     res.json(suggestion);
   } catch (e) {
@@ -50,7 +46,7 @@ router.patch('/:id', requireAuth, async (req, res) => {
 // Admin: delete one
 router.delete('/:id', requireAuth, async (req, res) => {
   try {
-    await Suggestion.findByIdAndDelete(req.params.id);
+    await Suggestion.deleteById(req.params.id);
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: 'Server error' });
@@ -61,7 +57,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
 router.delete('/', requireAuth, async (req, res) => {
   try {
     const { ids } = req.body;
-    await Suggestion.deleteMany({ _id: { $in: ids } });
+    await Suggestion.deleteMany(ids);
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: 'Server error' });

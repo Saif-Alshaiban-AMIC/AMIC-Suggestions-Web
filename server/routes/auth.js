@@ -4,8 +4,8 @@ const User = require('../models/User');
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
-    const user = await User.findOne({ username });
-    if (!user || !(await user.comparePassword(password))) {
+    const user = await User.findByUsername(username);
+    if (!user || !(await User.comparePassword(password, user.password))) {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
     req.session.userId = user._id;
@@ -16,7 +16,8 @@ router.post('/login', async (req, res) => {
 });
 
 router.post('/logout', (req, res) => {
-  req.session.destroy(() => res.json({ ok: true }));
+  req.session = null;
+  res.json({ ok: true });
 });
 
 router.get('/me', (req, res) => {
@@ -27,7 +28,7 @@ router.get('/me', (req, res) => {
 // One-time setup: create admin user if none exists
 router.post('/setup', async (req, res) => {
   try {
-    const count = await User.countDocuments();
+    const count = await User.count();
     if (count > 0) return res.status(400).json({ error: 'Admin already exists' });
     const { username, password } = req.body;
     await User.create({ username, password });

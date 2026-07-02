@@ -1,19 +1,31 @@
-const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { db } = require('../firebase');
 
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-});
+const users = db.collection('users');
 
-userSchema.pre('save', async function () {
-  if (this.isModified('password')) {
-    this.password = await bcrypt.hash(this.password, 10);
-  }
-});
+// Mongoose-free data access for the `users` collection.
+const User = {
+  async findByUsername(username) {
+    const snap = await users.where('username', '==', username).limit(1).get();
+    if (snap.empty) return null;
+    const doc = snap.docs[0];
+    return { _id: doc.id, ...doc.data() };
+  },
 
-userSchema.methods.comparePassword = function (plain) {
-  return bcrypt.compare(plain, this.password);
+  async count() {
+    const snap = await users.count().get();
+    return snap.data().count;
+  },
+
+  async create({ username, password }) {
+    const hash = await bcrypt.hash(password, 10);
+    const ref = await users.add({ username, password: hash });
+    return { _id: ref.id, username };
+  },
+
+  comparePassword(plain, hash) {
+    return bcrypt.compare(plain, hash);
+  },
 };
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = User;
